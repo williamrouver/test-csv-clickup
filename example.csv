@@ -1,0 +1,21 @@
+Task Name,Assignee,Time Tracked,Status,Tags,Date Created
+Implementar login,João Silva,12,Complete,Frontend,2025-01-15
+Criar API REST,Maria Santos,15,Complete,Backend,2025-01-16
+Design da homepage,Pedro Costa,8,In Progress,Frontend,2025-01-17
+Configurar banco de dados,João Silva,10,Complete,Backend,2025-01-18
+Testes unitários,Ana Oliveira,20,Complete,Backend,2025-01-19
+Revisar código,Maria Santos,5,In Progress,Code Review,2025-01-20
+Documentação API,Pedro Costa,7,Complete,Backend,2025-01-21
+Implementar dashboard,João Silva,18,In Progress,Frontend,2025-01-22
+Otimizar queries,Maria Santos,12,Complete,Backend,2025-01-23
+Deploy produção,Ana Oliveira,6,Complete,DevOps,2025-01-24
+Bug fix crítico,João Silva,4,Complete,Frontend,2025-01-25
+Reunião cliente,Pedro Costa,2,Complete,Project Management,2025-01-26
+Implementar filtros,Maria Santos,10,In Progress,Frontend,2025-01-27
+Backup automático,Ana Oliveira,8,Complete,DevOps,2025-01-28
+Code review backend,João Silva,3,Complete,Code Review,2025-01-29
+Melhorias UX,Pedro Costa,14,In Progress,Frontend,2025-01-30
+Integração payment,Maria Santos,20,Complete,Backend,2025-02-01
+Testes integração,Ana Oliveira,15,Complete,Backend,2025-02-02
+Atualizar deps,João Silva,5,Complete,DevOps,2025-02-03
+Sprint planning,Pedro Costa,3,Complete,Project Management,2025-02-04
