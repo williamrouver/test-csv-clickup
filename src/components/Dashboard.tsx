@@ -16,11 +16,17 @@ import { CapacityChart } from '@/components/charts/CapacityChart';
 import { ProjectCompletionChart } from '@/components/charts/ProjectCompletionChart';
 import { EstimatedVsActualChart } from '@/components/charts/EstimatedVsActualChart';
 import { getTopPerformers, getLowPerformers } from '@/lib/csv-parser';
-import { Users, Clock, CheckCircle, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, Filter, Settings, Sun, Moon } from 'lucide-react';
+import { Users, Clock, CheckCircle, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, Filter, Settings, Sun, Moon, FileDown } from 'lucide-react';
+import { exportToPDF } from '@/lib/pdf-exporter';
 import { Select } from '@/components/ui/select';
 import { useEffect } from 'react';
 import { InternManager } from '@/components/InternManager';
 import { InternBadge } from '@/components/InternBadge';
+import { PersonTasksModal } from '@/components/PersonTasksModal';
+import { ProjectTasksModal } from '@/components/ProjectTasksModal';
+import { AllTasksModal } from '@/components/AllTasksModal';
+import { CompletedTasksModal } from '@/components/CompletedTasksModal';
+import { ActivePeopleModal } from '@/components/ActivePeopleModal';
 
 interface DashboardProps {
   data: DashboardData;
@@ -52,6 +58,15 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
     const saved = localStorage.getItem('darkMode');
     return saved === 'true';
   });
+  const [selectedPerson, setSelectedPerson] = useState<PersonStats | null>(null);
+  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
+  const [selectedProjectData, setSelectedProjectData] = useState<{ name: string; tasks: any[] } | null>(null);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isAllTasksModalOpen, setIsAllTasksModalOpen] = useState(false);
+  const [isCompletedTasksModalOpen, setIsCompletedTasksModalOpen] = useState(false);
+  const [isActivePeopleModalOpen, setIsActivePeopleModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 20;
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -64,8 +79,48 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
     }
   }, [isDarkMode]);
 
+  // Reset pagination when filter or tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedProject, activeTab]);
+
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
+  };
+
+  const handleExportPDF = () => {
+    const tabNames: Record<string, string> = {
+      overview: 'Visao-Geral',
+      people: 'Pessoas',
+      projects: 'Projetos',
+      tasks: 'Tarefas',
+      capacity: 'Capacidade',
+      estimated: 'Estimado-vs-Real',
+    };
+    const fileName = `Dashboard-${tabNames[activeTab]}-${new Date().toISOString().split('T')[0]}.pdf`;
+    const elementId = `tab-content-${activeTab}`;
+    exportToPDF(elementId, fileName);
+  };
+
+  const handlePersonClick = (person: PersonStats) => {
+    setSelectedPerson(person);
+    setIsPersonModalOpen(true);
+  };
+
+  const handleClosePersonModal = () => {
+    setIsPersonModalOpen(false);
+    setSelectedPerson(null);
+  };
+
+  const handleProjectClick = (projectName: string) => {
+    const tasks = data.tasksByProject.get(projectName) || [];
+    setSelectedProjectData({ name: projectName, tasks });
+    setIsProjectModalOpen(true);
+  };
+
+  const handleCloseProjectModal = () => {
+    setIsProjectModalOpen(false);
+    setSelectedProjectData(null);
   };
 
   // Filtrar dados por projeto selecionado
@@ -79,9 +134,29 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
     const peopleInProject = new Set(projectTasks.map((task: any) => task.assignee));
 
     // Filtrar personStats para incluir apenas pessoas do projeto
-    const filteredPersonStats = data.personStats.filter(person =>
-      peopleInProject.has(person.name)
-    );
+    // E filtrar as tarefas de cada pessoa para incluir apenas tarefas do projeto selecionado
+    const filteredPersonStats = data.personStats
+      .filter(person => peopleInProject.has(person.name))
+      .map(person => {
+        // Filtrar apenas as tarefas do projeto selecionado
+        const filteredTasks = person.tasks?.filter(task => task.project === selectedProject) || [];
+
+        // Recalcular estatísticas baseadas apenas nas tarefas filtradas
+        const totalTasks = filteredTasks.length;
+        const tasksCompleted = filteredTasks.filter(t => t.isCompleted).length;
+        const totalHours = filteredTasks.reduce((sum, t) => sum + t.actualHours, 0);
+        const estimatedHours = filteredTasks.reduce((sum, t) => sum + t.estimatedHours, 0);
+
+        return {
+          ...person,
+          tasks: filteredTasks,
+          totalTasks,
+          tasksCompleted,
+          totalHours,
+          estimatedHours,
+          capacityUsage: person.capacity > 0 ? (totalHours / person.capacity) * 100 : 0
+        };
+      });
 
     // Filtrar projectStats para incluir apenas o projeto selecionado ou relacionados
     const filteredProjectStats = data.projectStats.filter(project =>
@@ -209,8 +284,8 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
   }, [filteredData.personStats, capacitySortField, capacitySortOrder]);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto p-6 space-y-6 animate-fade-in">
+      <div className="flex justify-between items-center animate-slide-in-from-top">
         <div>
           <h1 className="text-3xl font-bold">Dashboard Operacional</h1>
           <p className="text-muted-foreground">Análise de produtividade e projetos</p>
@@ -267,7 +342,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
 
       {/* Cards de Resumo */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="animate-slide-in-from-bottom transition-all duration-300 hover:scale-105">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Horas</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -280,7 +355,11 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 animate-slide-in-from-bottom"
+          style={{ animationDelay: '0.1s' }}
+          onClick={() => setIsAllTasksModalOpen(true)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Tarefas</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -288,12 +367,16 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold">{filteredData.totalTasks}</div>
             <p className="text-xs text-muted-foreground">
-              Tarefas registradas
+              Tarefas registradas (clique para ver)
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 animate-slide-in-from-bottom"
+          style={{ animationDelay: '0.2s' }}
+          onClick={() => setIsCompletedTasksModalOpen(true)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tarefas Concluídas</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -301,12 +384,16 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold">{filteredData.completedTasks}</div>
             <p className="text-xs text-muted-foreground">
-              Taxa de conclusão: {completionRate}%
+              Taxa de conclusão: {completionRate}% (clique para ver)
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 animate-slide-in-from-bottom"
+          style={{ animationDelay: '0.3s' }}
+          onClick={() => setIsActivePeopleModalOpen(true)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pessoas Ativas</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -314,7 +401,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold">{filteredData.personStats.length}</div>
             <p className="text-xs text-muted-foreground">
-              Colaboradores ativos
+              Colaboradores ativos (clique para ver)
             </p>
           </CardContent>
         </Card>
@@ -322,15 +409,22 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
 
       {/* Tabs com diferentes visualizações */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="people">Pessoas</TabsTrigger>
-          <TabsTrigger value="projects">Projetos</TabsTrigger>
-          <TabsTrigger value="capacity">Capacidade</TabsTrigger>
-          <TabsTrigger value="estimated">Estimado vs Real</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-between items-center">
+          <TabsList>
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="people">Pessoas</TabsTrigger>
+            <TabsTrigger value="projects">Projetos</TabsTrigger>
+            <TabsTrigger value="tasks">Tarefas</TabsTrigger>
+            <TabsTrigger value="capacity">Capacidade</TabsTrigger>
+            <TabsTrigger value="estimated">Estimado vs Real</TabsTrigger>
+          </TabsList>
+          <Button variant="outline" onClick={handleExportPDF} className="flex items-center gap-2">
+            <FileDown className="h-4 w-4" />
+            Exportar PDF
+          </Button>
+        </div>
 
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="overview" className="space-y-4" id="tab-content-overview">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
@@ -359,7 +453,12 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                       return (
                         <TableRow key={person.name}>
                           <TableCell className="font-medium">
-                            {person.name}
+                            <button
+                              onClick={() => handlePersonClick(person)}
+                              className="hover:underline hover:text-blue-600 dark:hover:text-blue-400 text-left cursor-pointer"
+                            >
+                              {person.name}
+                            </button>
                             <InternBadge isIntern={person.isIntern} />
                           </TableCell>
                           <TableCell className="text-right">{person.totalTasks}</TableCell>
@@ -408,7 +507,12 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                       return (
                         <TableRow key={person.name}>
                           <TableCell className="font-medium">
-                            {person.name}
+                            <button
+                              onClick={() => handlePersonClick(person)}
+                              className="hover:underline hover:text-blue-600 dark:hover:text-blue-400 text-left cursor-pointer"
+                            >
+                              {person.name}
+                            </button>
                             <InternBadge isIntern={person.isIntern} />
                           </TableCell>
                           <TableCell className="text-right">{person.totalTasks}</TableCell>
@@ -441,7 +545,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="people" className="space-y-4">
+        <TabsContent value="people" className="space-y-4" id="tab-content-people">
           <Card>
             <CardContent className="pt-6">
               <PersonActivityChart data={filteredData.personStats} />
@@ -505,29 +609,61 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedPersonStats.map((person) => (
-                    <TableRow key={person.name}>
-                      <TableCell className="font-medium">
-                        {person.name}
-                        <InternBadge isIntern={person.isIntern} />
-                      </TableCell>
-                      <TableCell className="text-right">{person.totalTasks}</TableCell>
-                      <TableCell className="text-right">{person.tasksCompleted}</TableCell>
-                      <TableCell className="text-right">{person.totalHours.toFixed(1)}h</TableCell>
-                      <TableCell className="text-right">
-                        {person.totalTasks > 0
-                          ? ((person.tasksCompleted / person.totalTasks) * 100).toFixed(1)
-                          : '0'}%
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {sortedPersonStats.map((person) => {
+                    // Obter projetos únicos da pessoa (exceto "Sprint | 2025")
+                    const personProjects = person.tasks
+                      ? Array.from(new Set(person.tasks.map(t => t.project)))
+                          .filter(p => p !== 'Sprint | 2025')
+                      : [];
+
+                    return (
+                      <TableRow key={person.name}>
+                        <TableCell className="font-medium">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handlePersonClick(person)}
+                                className="hover:underline hover:text-blue-600 dark:hover:text-blue-400 text-left cursor-pointer"
+                              >
+                                {person.name}
+                              </button>
+                              <InternBadge isIntern={person.isIntern} />
+                            </div>
+                            {personProjects.length > 0 && (
+                              <div className="flex flex-col gap-1">
+                                <span className="text-xs text-muted-foreground">Projetos trabalhados:</span>
+                                <div className="flex flex-wrap gap-1">
+                                  {personProjects.map(project => (
+                                    <span
+                                      key={project}
+                                      className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium"
+                                    >
+                                      {project}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">{person.totalTasks}</TableCell>
+                        <TableCell className="text-right">{person.tasksCompleted}</TableCell>
+                        <TableCell className="text-right">{person.totalHours.toFixed(1)}h</TableCell>
+                        <TableCell className="text-right">
+                          {person.totalTasks > 0
+                            ? ((person.tasksCompleted / person.totalTasks) * 100).toFixed(1)
+                            : '0'}%
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="projects" className="space-y-4">
+        <TabsContent value="projects" className="space-y-4" id="tab-content-projects">
           <Card>
             <CardContent className="pt-6">
               <ProjectCompletionChart data={filteredData.projectStats} />
@@ -584,7 +720,14 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                 <TableBody>
                   {sortedProjectStats.map((project) => (
                     <TableRow key={project.name}>
-                      <TableCell className="font-medium">{project.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <button
+                          onClick={() => handleProjectClick(project.name)}
+                          className="hover:underline hover:text-blue-600 dark:hover:text-blue-400 text-left cursor-pointer"
+                        >
+                          {project.name}
+                        </button>
+                      </TableCell>
                       <TableCell className="text-right">{project.totalTasks}</TableCell>
                       <TableCell className="text-right">{project.completedTasks}</TableCell>
                       <TableCell className="text-right">
@@ -608,7 +751,177 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="capacity" className="space-y-4">
+        <TabsContent value="tasks" className="space-y-4" id="tab-content-tasks">
+          <Card>
+            <CardHeader>
+              <CardTitle>Todas as Tarefas</CardTitle>
+              <CardDescription>Visualização completa de todas as tarefas com status, tempos e projetos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                // Flatten all tasks with person info
+                const allTasksWithPerson = filteredData.personStats.flatMap(person =>
+                  (person.tasks || []).map(task => ({
+                    ...task,
+                    personName: person.name,
+                    isIntern: person.isIntern,
+                    personData: person,
+                  }))
+                );
+
+                // Calculate pagination
+                const totalTasks = allTasksWithPerson.length;
+                const totalPages = Math.ceil(totalTasks / tasksPerPage);
+                const startIndex = (currentPage - 1) * tasksPerPage;
+                const endIndex = startIndex + tasksPerPage;
+                const currentTasks = allTasksWithPerson.slice(startIndex, endIndex);
+
+                return (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome da Tarefa</TableHead>
+                          <TableHead>Responsável</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Tempo Estimado</TableHead>
+                          <TableHead className="text-right">Tempo Executado</TableHead>
+                          <TableHead className="text-right">Diferença</TableHead>
+                          <TableHead>Projeto</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentTasks.map((task, index) => {
+                          const diff = task.actualHours - task.estimatedHours;
+                          const animationDelay = `${index * 0.02}s`;
+
+                          return (
+                            <TableRow
+                              key={`${task.personName}-${index}`}
+                              className="animate-fade-in"
+                              style={{ animationDelay }}
+                            >
+                              <TableCell className="font-medium">{task.name}</TableCell>
+                              <TableCell>
+                                <button
+                                  onClick={() => handlePersonClick(task.personData)}
+                                  className="hover:underline hover:text-blue-600 dark:hover:text-blue-400 text-left cursor-pointer inline-flex items-center gap-2"
+                                >
+                                  {task.personName}
+                                  <InternBadge isIntern={task.isIntern} />
+                                </button>
+                              </TableCell>
+                              <TableCell>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  task.isCompleted
+                                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                                    : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                                }`}>
+                                  {task.isCompleted ? 'Concluída' : 'Em andamento'}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">{task.estimatedHours.toFixed(1)}h</TableCell>
+                              <TableCell className="text-right">{task.actualHours.toFixed(1)}h</TableCell>
+                              <TableCell className="text-right">
+                                <span className={`font-medium ${
+                                  diff > 0 ? 'text-red-600' : diff < 0 ? 'text-green-600' : 'text-muted-foreground'
+                                }`}>
+                                  {diff > 0 ? '+' : ''}{diff.toFixed(1)}h
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium">
+                                  {task.project}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+
+                    {totalTasks === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Nenhuma tarefa encontrada para o filtro aplicado.
+                      </div>
+                    )}
+
+                    {/* Pagination Controls */}
+                    {totalTasks > 0 && (
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div className="text-sm text-muted-foreground">
+                          Exibindo {startIndex + 1} a {Math.min(endIndex, totalTasks)} de {totalTasks} tarefas
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(1)}
+                            disabled={currentPage === 1}
+                          >
+                            Primeira
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            Anterior
+                          </Button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                              let pageNum;
+                              if (totalPages <= 5) {
+                                pageNum = i + 1;
+                              } else if (currentPage <= 3) {
+                                pageNum = i + 1;
+                              } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                              } else {
+                                pageNum = currentPage - 2 + i;
+                              }
+
+                              return (
+                                <Button
+                                  key={pageNum}
+                                  variant={currentPage === pageNum ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setCurrentPage(pageNum)}
+                                  className="w-10"
+                                >
+                                  {pageNum}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                          >
+                            Próxima
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(totalPages)}
+                            disabled={currentPage === totalPages}
+                          >
+                            Última
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="capacity" className="space-y-4" id="tab-content-capacity">
           <Card>
             <CardContent className="pt-6">
               <CapacityChart data={filteredData.personStats} />
@@ -686,7 +999,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="estimated" className="space-y-4">
+        <TabsContent value="estimated" className="space-y-4" id="tab-content-estimated">
           <Card>
             <CardContent className="pt-6">
               <EstimatedVsActualChart data={filteredData.personStats} />
@@ -720,7 +1033,12 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                       return (
                         <TableRow key={person.name}>
                           <TableCell className="font-medium">
-                            {person.name}
+                            <button
+                              onClick={() => handlePersonClick(person)}
+                              className="hover:underline hover:text-blue-600 dark:hover:text-blue-400 text-left cursor-pointer"
+                            >
+                              {person.name}
+                            </button>
                             <InternBadge isIntern={person.isIntern} />
                           </TableCell>
                           <TableCell className="text-right">{person.estimatedHours.toFixed(1)}h</TableCell>
@@ -757,6 +1075,44 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Tarefas da Pessoa */}
+      <PersonTasksModal
+        person={selectedPerson}
+        isOpen={isPersonModalOpen}
+        onClose={handleClosePersonModal}
+      />
+
+      {/* Modal de Tarefas do Projeto */}
+      <ProjectTasksModal
+        project={selectedProjectData}
+        isOpen={isProjectModalOpen}
+        onClose={handleCloseProjectModal}
+      />
+
+      {/* Modal de Todas as Tarefas */}
+      <AllTasksModal
+        isOpen={isAllTasksModalOpen}
+        onClose={() => setIsAllTasksModalOpen(false)}
+        personStats={filteredData.personStats}
+        onPersonClick={handlePersonClick}
+      />
+
+      {/* Modal de Tarefas Concluídas */}
+      <CompletedTasksModal
+        isOpen={isCompletedTasksModalOpen}
+        onClose={() => setIsCompletedTasksModalOpen(false)}
+        personStats={filteredData.personStats}
+        onPersonClick={handlePersonClick}
+      />
+
+      {/* Modal de Pessoas Ativas */}
+      <ActivePeopleModal
+        isOpen={isActivePeopleModalOpen}
+        onClose={() => setIsActivePeopleModalOpen(false)}
+        personStats={filteredData.personStats}
+        onPersonClick={handlePersonClick}
+      />
     </div>
   );
 }

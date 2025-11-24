@@ -45,11 +45,36 @@ Dashboard operacional completo para análise de dados exportados do ClickUp, com
 - **% de Desvio**: Indicador de precisão nas estimativas
 - **Análise de Tendências**: Identifique padrões de subestimação/superestimação
 
+### 📝 Visualização de Tarefas
+- **Aba Tarefas Completa**: Visualize todas as tarefas em uma única tabela
+- **Paginação Inteligente**: 20 tarefas por página com navegação fácil
+- **Informações Detalhadas**: Status, tempo estimado, tempo executado, projeto e responsável
+- **Diferença de Tempo**: Código de cores mostrando desvio (verde/vermelho)
+- **Integração com Filtros**: Filtre por projeto para ver apenas tarefas específicas
+- **Nomes Clicáveis**: Clique no nome do responsável para ver todas as suas tarefas
+
+### 🔄 Interatividade e Navegação
+- **Cards Clicáveis**: Clique nos cards principais para abrir modais detalhados
+  - **Total de Horas**: Modal com todas as pessoas e suas horas trabalhadas
+  - **Tarefas Completadas**: Modal mostrando todas as tarefas concluídas
+  - **Pessoas Ativas**: Modal listando todas as pessoas ativas no período
+- **Modais Redimensionáveis**: Arraste para redimensionar qualquer modal
+- **Nomes Clicáveis nas Tabelas**: Clique em qualquer nome para ver detalhes da pessoa
+- **Headers Fixos em Modais**: Headers permanecem visíveis ao rolar o conteúdo
+- **Animações Suaves**: Transições e animações em toda a aplicação
+
+### 📄 Exportação e Relatórios
+- **Exportação para PDF**: Exporte qualquer aba do dashboard para PDF
+- **PDF Formatado**: Inclui logo, título, descrição e todas as tabelas
+- **Múltiplos Formatos**: Exporte visão geral, pessoas, projetos, capacidade ou tarefas
+
 ### 🎨 Interface e Experiência
-- **Dark Mode**: Tema escuro completo com toggle no header
+- **Dark Mode**: Tema escuro completo com pure black background e contraste otimizado
 - **Design Responsivo**: Funciona em desktop, tablet e mobile
 - **Gráficos Interativos**: Tooltips, legendas e hover effects
+- **Gráficos Otimizados**: Labels legíveis, sem overflow, legendas no topo
 - **Interface Moderna**: Componentes shadcn/ui + Tailwind CSS
+- **Animações Personalizadas**: Fade-in, slide-in e stagger effects
 
 ## 🚀 Stack Tecnológica
 
@@ -63,6 +88,8 @@ Dashboard operacional completo para análise de dados exportados do ClickUp, com
 | **Recharts** | 2.12 | Visualização de dados |
 | **PapaParse** | 5.4 | Parse de CSV |
 | **Lucide React** | Latest | Ícones |
+| **jsPDF** | 2.5 | Exportação para PDF |
+| **html2canvas** | 1.4 | Captura de tela para PDF |
 
 ## 📦 Instalação
 
@@ -154,17 +181,53 @@ Navegue pelas abas disponíveis:
 - % de desvio
 - Identificação de padrões
 
-### 6. Filtrar por Projeto
+#### 📝 Tarefas
+- Tabela completa de todas as tarefas
+- Paginação com 20 tarefas por página
+- Navegação entre páginas (Primeira, Anterior, 1, 2, 3..., Próxima, Última)
+- Contador "Exibindo X a Y de Z tarefas"
+- Informações: Nome, Responsável, Status, Tempo Estimado, Tempo Executado, Diferença, Projeto
+- Clique no nome do responsável para ver todas as suas tarefas
+- Responde ao filtro de projeto
+
+### 6. Usar Funcionalidades Interativas
+
+#### Clique nos Cards Principais
+- **Card "Total de Horas"**: Abre modal com todas as pessoas e suas horas
+- **Card "Tarefas Completadas"**: Mostra todas as tarefas concluídas
+- **Card "Pessoas Ativas"**: Lista todas as pessoas que trabalharam no período
+
+#### Clique em Nomes nas Tabelas
+- Clique em qualquer nome de pessoa para abrir um modal com:
+  - Informações gerais (horas, tarefas, capacidade)
+  - Lista de todas as tarefas da pessoa
+  - Projetos em que trabalhou (badges clicáveis)
+- Clique em um badge de projeto para filtrar todo o dashboard
+
+#### Modais Redimensionáveis
+- Todos os modais podem ser redimensionados
+- Arraste a borda inferior ou os cantos
+- Headers permanecem fixos ao rolar
+
+### 7. Exportar para PDF
+1. Navegue até a aba que deseja exportar
+2. Clique no botão **"Exportar PDF"** no topo
+3. O PDF será gerado e baixado automaticamente
+4. Disponível para: Visão Geral, Pessoas, Projetos, Capacidade, Estimado vs Real, Tarefas
+
+### 8. Filtrar por Projeto
 
 1. Use o **Filtro de Projeto** no topo do dashboard
 2. Selecione um projeto específico
 3. **Todos** os dashboards serão filtrados automaticamente
 4. Clique em **"Limpar Filtro"** para voltar à visualização completa
 
-### 7. Alternar Dark Mode
+### 9. Alternar Dark Mode
 
 - Clique no ícone **☀️/🌙** no canto superior direito
 - O tema será salvo no localStorage
+- Pure black background com contraste otimizado
+- Gráficos ajustam cores automaticamente
 
 ## 📂 Estrutura do Projeto
 
@@ -172,36 +235,43 @@ Navegue pelas abas disponíveis:
 clickup-dashboard/
 ├── src/
 │   ├── components/
-│   │   ├── ui/                    # Componentes shadcn/ui
+│   │   ├── ui/                           # Componentes shadcn/ui
 │   │   │   ├── button.tsx
 │   │   │   ├── card.tsx
 │   │   │   ├── dialog.tsx
 │   │   │   ├── select.tsx
 │   │   │   ├── table.tsx
 │   │   │   └── tabs.tsx
-│   │   ├── charts/                # Componentes de gráficos
+│   │   ├── charts/                       # Componentes de gráficos
 │   │   │   ├── PersonActivityChart.tsx
 │   │   │   ├── CapacityChart.tsx
 │   │   │   ├── ProjectCompletionChart.tsx
 │   │   │   └── EstimatedVsActualChart.tsx
-│   │   ├── FileUpload.tsx         # Upload de CSV
-│   │   ├── ColumnMapper.tsx       # Mapeamento de colunas
-│   │   ├── Dashboard.tsx          # Dashboard principal
-│   │   ├── InternManager.tsx      # Gestão de estagiários
-│   │   └── InternBadge.tsx        # Badge visual de estagiário
+│   │   ├── ActivePeopleModal.tsx         # Modal pessoas ativas
+│   │   ├── AllTasksModal.tsx             # Modal todas tarefas
+│   │   ├── CompletedTasksModal.tsx       # Modal tarefas completas
+│   │   ├── PersonTasksModal.tsx          # Modal tarefas por pessoa
+│   │   ├── ProjectTasksModal.tsx         # Modal tarefas por projeto
+│   │   ├── ResizableDialog.tsx           # Componente modal redimensionável
+│   │   ├── FileUpload.tsx                # Upload de CSV
+│   │   ├── ColumnMapper.tsx              # Mapeamento de colunas
+│   │   ├── Dashboard.tsx                 # Dashboard principal
+│   │   ├── InternManager.tsx             # Gestão de estagiários
+│   │   └── InternBadge.tsx               # Badge visual de estagiário
 │   ├── lib/
-│   │   ├── csv-parser.ts          # Parse e cálculos
-│   │   └── utils.ts               # Funções utilitárias
+│   │   ├── csv-parser.ts                 # Parse e cálculos
+│   │   ├── pdf-exporter.ts               # Exportação para PDF
+│   │   └── utils.ts                      # Funções utilitárias
 │   ├── types/
-│   │   └── index.ts               # Definições TypeScript
-│   ├── App.tsx                    # Componente raiz
-│   ├── main.tsx                   # Entry point
-│   └── index.css                  # Estilos globais + Tailwind
-├── public/                        # Arquivos estáticos
-├── package.json                   # Dependências
-├── tsconfig.json                  # Configuração TypeScript
-├── tailwind.config.js             # Configuração Tailwind
-└── vite.config.ts                 # Configuração Vite
+│   │   └── index.ts                      # Definições TypeScript
+│   ├── App.tsx                           # Componente raiz
+│   ├── main.tsx                          # Entry point
+│   └── index.css                         # Estilos globais + Tailwind
+├── public/                               # Arquivos estáticos
+├── package.json                          # Dependências
+├── tsconfig.json                         # Configuração TypeScript
+├── tailwind.config.js                    # Configuração Tailwind (animações)
+└── vite.config.ts                        # Configuração Vite
 ```
 
 ## ⚙️ Configurações
@@ -311,6 +381,8 @@ interface PersonStats {
   totalTasks: number;
   capacityUsage: number; // percentage
   isIntern?: boolean;    // Marca se é estagiário
+  tasks?: Task[];        // Lista de tarefas da pessoa
+  projects: Set<string>; // Projetos em que trabalhou
 }
 ```
 
@@ -324,6 +396,19 @@ interface ProjectStats {
   completionPercentage: number;
   estimatedHours: number;
   actualHours: number;
+}
+```
+
+### Task
+
+```typescript
+interface Task {
+  name: string;
+  status: string;
+  estimatedHours: number;
+  actualHours: number;
+  project: string;
+  date?: string;
 }
 ```
 
@@ -346,6 +431,20 @@ interface ProjectStats {
 ### Filtro de projeto não atualiza
 - Recarregue a página
 - Clique em "Limpar Filtro" e tente novamente
+
+### Paginação mostrando página vazia
+- Isso é normal ao aplicar filtros que reduzem o número de tarefas
+- A página é automaticamente resetada para 1 ao mudar de filtro
+
+### Modais não abrem ao clicar
+- Verifique se os dados foram carregados corretamente
+- Tente recarregar a página
+- Verifique o console para erros
+
+### PDF não está sendo gerado
+- Verifique se você está em uma aba válida
+- Aguarde alguns segundos para a geração
+- Verifique se o navegador não bloqueou o download
 
 ## 🤝 Contribuindo
 

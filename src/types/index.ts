@@ -14,6 +14,16 @@ export interface ColumnMapping {
   taskName?: string;
 }
 
+export interface Task {
+  name: string;
+  estimatedHours: number;
+  actualHours: number;
+  status: string;
+  isCompleted: boolean;
+  project: string;
+  date?: string;
+}
+
 export interface PersonStats {
   name: string;
   totalHours: number;
@@ -22,6 +32,7 @@ export interface PersonStats {
   totalTasks: number;
   capacityUsage: number; // percentage
   isIntern?: boolean; // Marca se é estagiário (capacidade 40h)
+  tasks?: Task[]; // Lista de tarefas da pessoa
 }
 
 export interface ProjectStats {

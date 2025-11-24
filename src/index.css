@@ -57,3 +57,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Transições suaves para elementos interativos */
+  button, a, [role="button"] {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  /* Hover effects suaves */
+  .hover-lift {
+    @apply transition-transform duration-200 ease-in-out hover:-translate-y-1;
+  }
+
+  /* Animação de fade para linhas de tabela */
+  tbody tr {
+    @apply transition-colors duration-150 ease-in-out;
+  }
+
+  /* Smooth scroll */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Transições de tabs */
+  [role="tabpanel"] {
+    animation: fade-in 0.3s ease-out;
+  }
+}

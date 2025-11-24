@@ -33,18 +33,22 @@ export function ProjectCompletionChart({ data }: ProjectCompletionChartProps) {
   const gridColor = isDark ? '#333333' : '#e5e7eb';
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-96">
       <h3 className="text-lg font-semibold mb-4">% de Conclusão por Projeto</h3>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
           <XAxis
             dataKey="name"
             angle={-45}
             textAnchor="end"
-            height={100}
+            height={120}
+            interval={0}
             stroke={textColor}
-            tick={{ fill: textColor }}
+            tick={{ fill: textColor, fontSize: 12 }}
           />
           <YAxis
             label={{ value: '% Conclusão', angle: -90, position: 'insideLeft', fill: textColor }}
@@ -60,7 +64,10 @@ export function ProjectCompletionChart({ data }: ProjectCompletionChartProps) {
             }}
             labelStyle={{ color: textColor }}
           />
-          <Legend wrapperStyle={{ color: textColor }} />
+          <Legend
+            wrapperStyle={{ color: textColor, paddingTop: '10px' }}
+            verticalAlign="top"
+          />
           <Bar dataKey="Conclusão (%)" radius={[8, 8, 0, 0]}>
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getColor(entry['Conclusão (%)'])} />

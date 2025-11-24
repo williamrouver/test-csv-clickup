@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { CSVData, ColumnMapping, DashboardData, PersonStats, ProjectStats } from '@/types';
+import { CSVData, ColumnMapping, DashboardData, PersonStats, ProjectStats, Task } from '@/types';
 
 // Função auxiliar para converter tempo em diversos formatos para horas decimais
 function parseTimeToHours(timeStr: string): number {
@@ -76,6 +76,7 @@ export function calculateDashboardData(
     estimatedHours: number;
     tasksCompleted: number;
     totalTasks: number;
+    tasks: Task[];
   }>();
 
   // Map para armazenar stats por projeto
@@ -96,8 +97,12 @@ export function calculateDashboardData(
   rows.forEach((row) => {
     // Processar pessoa
     let assignee = mapping.assignee ? (row[mapping.assignee] || 'Não atribuído').trim() : 'Não atribuído';
+
+    // Remover colchetes do início e fim do nome (ex: "[Nome]" -> "Nome")
+    assignee = assignee.replace(/^\[|\]$/g, '').trim();
+
     // Tratar [] como tarefa sem dono
-    if (assignee === '[]' || assignee === '') {
+    if (assignee === '' || assignee === '[]') {
       assignee = 'Tarefa sem dono';
     }
 
@@ -144,6 +149,12 @@ export function calculateDashboardData(
       }
     }
 
+    // Processar nome da tarefa
+    const taskName = mapping.taskName ? (row[mapping.taskName] || 'Sem nome').trim() : 'Sem nome';
+
+    // Processar data
+    const date = mapping.date ? row[mapping.date] : undefined;
+
     // Atualizar stats de pessoa
     if (!personStatsMap.has(assignee)) {
       personStatsMap.set(assignee, {
@@ -151,6 +162,7 @@ export function calculateDashboardData(
         estimatedHours: 0,
         tasksCompleted: 0,
         totalTasks: 0,
+        tasks: [],
       });
     }
     const personStats = personStatsMap.get(assignee)!;
@@ -158,6 +170,17 @@ export function calculateDashboardData(
     personStats.estimatedHours += estimatedHours;
     personStats.totalTasks += 1;
     if (isCompleted) personStats.tasksCompleted += 1;
+
+    // Adicionar tarefa à lista de tarefas da pessoa
+    personStats.tasks.push({
+      name: taskName,
+      estimatedHours,
+      actualHours: hours,
+      status,
+      isCompleted,
+      project,
+      date,
+    });
 
     // Atualizar stats de projeto
     if (!projectStatsMap.has(project)) {
@@ -179,10 +202,12 @@ export function calculateDashboardData(
       tasksByProject.set(project, []);
     }
     tasksByProject.get(project)!.push({
+      name: taskName,
       assignee,
       hours,
       estimatedHours,
       isCompleted,
+      status,
     });
 
     // Totais gerais
@@ -204,6 +229,7 @@ export function calculateDashboardData(
         totalTasks: stats.totalTasks,
         capacityUsage: (stats.totalHours / capacity) * 100,
         isIntern,
+        tasks: stats.tasks,
       };
     }
   );

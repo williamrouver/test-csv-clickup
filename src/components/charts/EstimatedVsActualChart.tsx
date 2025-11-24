@@ -29,18 +29,22 @@ export function EstimatedVsActualChart({ data, title = "Tempo Estimado vs Realiz
   const gridColor = isDark ? '#333333' : '#e5e7eb';
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-96">
       <h3 className="text-lg font-semibold mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
           <XAxis
             dataKey="name"
             angle={-45}
             textAnchor="end"
-            height={100}
+            height={120}
+            interval={0}
             stroke={textColor}
-            tick={{ fill: textColor }}
+            tick={{ fill: textColor, fontSize: 12 }}
           />
           <YAxis
             label={{ value: 'Horas', angle: -90, position: 'insideLeft', fill: textColor }}
@@ -56,7 +60,10 @@ export function EstimatedVsActualChart({ data, title = "Tempo Estimado vs Realiz
             }}
             labelStyle={{ color: textColor }}
           />
-          <Legend wrapperStyle={{ color: textColor }} />
+          <Legend
+            wrapperStyle={{ color: textColor, paddingTop: '10px' }}
+            verticalAlign="top"
+          />
           <Bar dataKey="Horas Estimadas" fill="#f59e0b" />
           <Bar dataKey="Horas Reais" fill="#3b82f6" />
         </BarChart>
