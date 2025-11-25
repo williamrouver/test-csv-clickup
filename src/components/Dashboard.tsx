@@ -18,7 +18,7 @@ import { EstimatedVsActualChart } from '@/components/charts/EstimatedVsActualCha
 import { getTopPerformers, getLowPerformers } from '@/lib/csv-parser';
 import { Users, Clock, CheckCircle, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, Filter, Settings, Sun, Moon, FileDown, AlertCircle } from 'lucide-react';
 import { exportToPDF } from '@/lib/pdf-exporter';
-import { Select } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEffect } from 'react';
 import { InternManager } from '@/components/InternManager';
 import { InternBadge } from '@/components/InternBadge';
@@ -67,6 +67,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
   const [isCompletedTasksModalOpen, setIsCompletedTasksModalOpen] = useState(false);
   const [isActivePeopleModalOpen, setIsActivePeopleModalOpen] = useState(false);
   const [isOpenTasksModalOpen, setIsOpenTasksModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all'); // Filtro de status para aba de tarefas
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 20;
 
@@ -84,7 +85,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
   // Reset pagination when filter or tab changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedProject, activeTab]);
+  }, [selectedProject, activeTab, statusFilter]);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -794,9 +795,26 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
               <CardDescription>Visualização completa de todas as tarefas com status, tempos e projetos</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Filtro de Status */}
+              <div className="mb-4 flex gap-4">
+                <div className="w-64">
+                  <label className="text-sm font-medium block mb-2">Filtrar por Status</label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os status</SelectItem>
+                      <SelectItem value="completed">Concluídas</SelectItem>
+                      <SelectItem value="open">Em Aberto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               {(() => {
                 // Flatten all tasks with person info
-                const allTasksWithPerson = filteredData.personStats.flatMap(person =>
+                let allTasksWithPerson = filteredData.personStats.flatMap(person =>
                   (person.tasks || []).map(task => ({
                     ...task,
                     personName: person.name,
@@ -804,6 +822,13 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                     personData: person,
                   }))
                 );
+
+                // Aplicar filtro de status
+                if (statusFilter === 'completed') {
+                  allTasksWithPerson = allTasksWithPerson.filter(task => task.isCompleted);
+                } else if (statusFilter === 'open') {
+                  allTasksWithPerson = allTasksWithPerson.filter(task => !task.isCompleted);
+                }
 
                 // Calculate pagination
                 const totalTasks = allTasksWithPerson.length;
