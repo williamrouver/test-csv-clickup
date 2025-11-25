@@ -16,7 +16,7 @@ import { CapacityChart } from '@/components/charts/CapacityChart';
 import { ProjectCompletionChart } from '@/components/charts/ProjectCompletionChart';
 import { EstimatedVsActualChart } from '@/components/charts/EstimatedVsActualChart';
 import { getTopPerformers, getLowPerformers } from '@/lib/csv-parser';
-import { Users, Clock, CheckCircle, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, Filter, Settings, Sun, Moon, FileDown } from 'lucide-react';
+import { Users, Clock, CheckCircle, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, Filter, Settings, Sun, Moon, FileDown, AlertCircle } from 'lucide-react';
 import { exportToPDF } from '@/lib/pdf-exporter';
 import { Select } from '@/components/ui/select';
 import { useEffect } from 'react';
@@ -27,6 +27,7 @@ import { ProjectTasksModal } from '@/components/ProjectTasksModal';
 import { AllTasksModal } from '@/components/AllTasksModal';
 import { CompletedTasksModal } from '@/components/CompletedTasksModal';
 import { ActivePeopleModal } from '@/components/ActivePeopleModal';
+import { OpenTasksModal } from '@/components/OpenTasksModal';
 
 interface DashboardProps {
   data: DashboardData;
@@ -65,6 +66,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
   const [isAllTasksModalOpen, setIsAllTasksModalOpen] = useState(false);
   const [isCompletedTasksModalOpen, setIsCompletedTasksModalOpen] = useState(false);
   const [isActivePeopleModalOpen, setIsActivePeopleModalOpen] = useState(false);
+  const [isOpenTasksModalOpen, setIsOpenTasksModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 20;
 
@@ -144,6 +146,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
         // Recalcular estatísticas baseadas apenas nas tarefas filtradas
         const totalTasks = filteredTasks.length;
         const tasksCompleted = filteredTasks.filter(t => t.isCompleted).length;
+        const tasksOpen = totalTasks - tasksCompleted;
         const totalHours = filteredTasks.reduce((sum, t) => sum + t.actualHours, 0);
         const estimatedHours = filteredTasks.reduce((sum, t) => sum + t.estimatedHours, 0);
 
@@ -152,6 +155,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           tasks: filteredTasks,
           totalTasks,
           tasksCompleted,
+          tasksOpen,
           totalHours,
           estimatedHours,
           capacityUsage: person.capacity > 0 ? (totalHours / person.capacity) * 100 : 0
@@ -168,12 +172,15 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
     const filteredTotalTasks = projectTasks.length;
     const filteredCompletedTasks = projectTasks.filter((task: any) => task.isCompleted).length;
 
+    const filteredOpenTasks = filteredTotalTasks - filteredCompletedTasks;
+
     return {
       personStats: filteredPersonStats,
       projectStats: filteredProjectStats,
       totalHours: filteredTotalHours,
       totalTasks: filteredTotalTasks,
       completedTasks: filteredCompletedTasks,
+      openTasks: filteredOpenTasks,
       tasksByProject: data.tasksByProject,
     };
   }, [data, selectedProject]);
@@ -341,7 +348,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
       </Card>
 
       {/* Cards de Resumo */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card className="animate-slide-in-from-bottom transition-all duration-300 hover:scale-105">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Horas</CardTitle>
@@ -385,6 +392,23 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
             <div className="text-2xl font-bold">{filteredData.completedTasks}</div>
             <p className="text-xs text-muted-foreground">
               Taxa de conclusão: {completionRate}% (clique para ver)
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card
+          className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 animate-slide-in-from-bottom"
+          style={{ animationDelay: '0.25s' }}
+          onClick={() => setIsOpenTasksModalOpen(true)}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tarefas em Aberto</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{filteredData.openTasks}</div>
+            <p className="text-xs text-muted-foreground">
+              Tarefas pendentes (clique para ver)
             </p>
           </CardContent>
         </Card>
@@ -589,6 +613,9 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                       </Button>
                     </TableHead>
                     <TableHead className="text-right">
+                      <span className="text-sm font-medium">Em Aberto</span>
+                    </TableHead>
+                    <TableHead className="text-right">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('totalHours')}
@@ -648,6 +675,9 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                         </TableCell>
                         <TableCell className="text-right">{person.totalTasks}</TableCell>
                         <TableCell className="text-right">{person.tasksCompleted}</TableCell>
+                        <TableCell className="text-right">
+                          <span className="text-orange-600 font-medium">{person.tasksOpen}</span>
+                        </TableCell>
                         <TableCell className="text-right">{person.totalHours.toFixed(1)}h</TableCell>
                         <TableCell className="text-right">
                           {person.totalTasks > 0
@@ -707,6 +737,9 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                       </Button>
                     </TableHead>
                     <TableHead className="text-right">
+                      <span className="text-sm font-medium">Em Aberto</span>
+                    </TableHead>
+                    <TableHead className="text-right">
                       <Button
                         variant="ghost"
                         onClick={() => handleProjectSort('completionPercentage')}
@@ -730,6 +763,9 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
                       </TableCell>
                       <TableCell className="text-right">{project.totalTasks}</TableCell>
                       <TableCell className="text-right">{project.completedTasks}</TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-orange-600 font-medium">{project.openTasks}</span>
+                      </TableCell>
                       <TableCell className="text-right">
                         <span
                           className={`font-medium ${
@@ -1112,6 +1148,15 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
         onClose={() => setIsActivePeopleModalOpen(false)}
         personStats={filteredData.personStats}
         onPersonClick={handlePersonClick}
+      />
+
+      {/* Modal de Tarefas em Aberto */}
+      <OpenTasksModal
+        isOpen={isOpenTasksModalOpen}
+        onClose={() => setIsOpenTasksModalOpen(false)}
+        personStats={filteredData.personStats}
+        onPersonClick={handlePersonClick}
+        selectedProject={selectedProject !== 'all' ? selectedProject : undefined}
       />
     </div>
   );

@@ -75,6 +75,7 @@ export function calculateDashboardData(
     totalHours: number;
     estimatedHours: number;
     tasksCompleted: number;
+    tasksOpen: number;
     totalTasks: number;
     tasks: Task[];
   }>();
@@ -83,6 +84,7 @@ export function calculateDashboardData(
   const projectStatsMap = new Map<string, {
     totalTasks: number;
     completedTasks: number;
+    openTasks: number;
     estimatedHours: number;
     actualHours: number;
   }>();
@@ -93,6 +95,7 @@ export function calculateDashboardData(
   let totalHours = 0;
   let totalTasks = 0;
   let completedTasks = 0;
+  let openTasks = 0;
 
   rows.forEach((row) => {
     // Processar pessoa
@@ -161,6 +164,7 @@ export function calculateDashboardData(
         totalHours: 0,
         estimatedHours: 0,
         tasksCompleted: 0,
+        tasksOpen: 0,
         totalTasks: 0,
         tasks: [],
       });
@@ -169,7 +173,11 @@ export function calculateDashboardData(
     personStats.totalHours += hours;
     personStats.estimatedHours += estimatedHours;
     personStats.totalTasks += 1;
-    if (isCompleted) personStats.tasksCompleted += 1;
+    if (isCompleted) {
+      personStats.tasksCompleted += 1;
+    } else {
+      personStats.tasksOpen += 1;
+    }
 
     // Adicionar tarefa à lista de tarefas da pessoa
     personStats.tasks.push({
@@ -187,6 +195,7 @@ export function calculateDashboardData(
       projectStatsMap.set(project, {
         totalTasks: 0,
         completedTasks: 0,
+        openTasks: 0,
         estimatedHours: 0,
         actualHours: 0,
       });
@@ -195,7 +204,11 @@ export function calculateDashboardData(
     projectStats.totalTasks += 1;
     projectStats.estimatedHours += estimatedHours;
     projectStats.actualHours += hours;
-    if (isCompleted) projectStats.completedTasks += 1;
+    if (isCompleted) {
+      projectStats.completedTasks += 1;
+    } else {
+      projectStats.openTasks += 1;
+    }
 
     // Armazenar tarefa por projeto
     if (!tasksByProject.has(project)) {
@@ -213,7 +226,11 @@ export function calculateDashboardData(
     // Totais gerais
     totalHours += hours;
     totalTasks += 1;
-    if (isCompleted) completedTasks += 1;
+    if (isCompleted) {
+      completedTasks += 1;
+    } else {
+      openTasks += 1;
+    }
   });
 
   // Converter maps para arrays
@@ -226,6 +243,7 @@ export function calculateDashboardData(
         totalHours: stats.totalHours,
         estimatedHours: stats.estimatedHours,
         tasksCompleted: stats.tasksCompleted,
+        tasksOpen: stats.tasksOpen,
         totalTasks: stats.totalTasks,
         capacityUsage: (stats.totalHours / capacity) * 100,
         isIntern,
@@ -239,6 +257,7 @@ export function calculateDashboardData(
       name,
       totalTasks: stats.totalTasks,
       completedTasks: stats.completedTasks,
+      openTasks: stats.openTasks,
       completionPercentage: stats.totalTasks > 0
         ? (stats.completedTasks / stats.totalTasks) * 100
         : 0,
@@ -259,6 +278,7 @@ export function calculateDashboardData(
     totalHours,
     totalTasks,
     completedTasks,
+    openTasks,
     tasksByProject,
   };
 }
