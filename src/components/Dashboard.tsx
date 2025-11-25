@@ -16,9 +16,9 @@ import { CapacityChart } from '@/components/charts/CapacityChart';
 import { ProjectCompletionChart } from '@/components/charts/ProjectCompletionChart';
 import { EstimatedVsActualChart } from '@/components/charts/EstimatedVsActualChart';
 import { getTopPerformers, getLowPerformers } from '@/lib/csv-parser';
-import { Users, Clock, CheckCircle, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, Filter, Settings, Sun, Moon, FileDown, AlertCircle } from 'lucide-react';
+import { Users, Clock, CheckCircle, TrendingUp, TrendingDown, BarChart3, ArrowUpDown, Filter, Sun, Moon, FileDown, AlertCircle } from 'lucide-react';
 import { exportToPDF } from '@/lib/pdf-exporter';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
 import { useEffect } from 'react';
 import { InternManager } from '@/components/InternManager';
 import { InternBadge } from '@/components/InternBadge';
@@ -151,6 +151,11 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
         const totalHours = filteredTasks.reduce((sum, t) => sum + t.actualHours, 0);
         const estimatedHours = filteredTasks.reduce((sum, t) => sum + t.estimatedHours, 0);
 
+        // Derivar capacity do capacityUsage existente
+        const capacity = person.capacityUsage > 0
+          ? person.totalHours / (person.capacityUsage / 100)
+          : (person.isIntern ? 40 : 80); // fallback para capacidade padrão
+
         return {
           ...person,
           tasks: filteredTasks,
@@ -159,7 +164,7 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
           tasksOpen,
           totalHours,
           estimatedHours,
-          capacityUsage: person.capacity > 0 ? (totalHours / person.capacity) * 100 : 0
+          capacityUsage: capacity > 0 ? (totalHours / capacity) * 100 : 0
         };
       });
 
@@ -799,15 +804,10 @@ export function Dashboard({ data, onReset, onInternUpdate }: DashboardProps) {
               <div className="mb-4 flex gap-4">
                 <div className="w-64">
                   <label className="text-sm font-medium block mb-2">Filtrar por Status</label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos os status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os status</SelectItem>
-                      <SelectItem value="completed">Concluídas</SelectItem>
-                      <SelectItem value="open">Em Aberto</SelectItem>
-                    </SelectContent>
+                  <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                    <option value="all">Todos os status</option>
+                    <option value="completed">Concluídas</option>
+                    <option value="open">Em Aberto</option>
                   </Select>
                 </div>
               </div>

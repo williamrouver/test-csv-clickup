@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertCircle } from 'lucide-react';
 import { PersonStats } from '@/types';
 import { ResizableDialog } from '@/components/ResizableDialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
 import { useState } from 'react';
 
 interface OpenTasksModalProps {
@@ -72,35 +72,25 @@ export function OpenTasksModal({ isOpen, onClose, personStats, onPersonClick, se
         <div className="flex gap-4 p-4 bg-muted/50 rounded-lg flex-shrink-0">
           <div className="flex-1">
             <label className="text-sm text-muted-foreground block mb-2">Filtrar por Pessoa</label>
-            <Select value={filterPerson} onValueChange={setFilterPerson}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todas as pessoas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as pessoas</SelectItem>
-                {peopleWithOpenTasks.map(person => (
-                  <SelectItem key={person} value={person}>
-                    {person}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+            <Select value={filterPerson} onChange={(e) => setFilterPerson(e.target.value)}>
+              <option value="all">Todas as pessoas</option>
+              {peopleWithOpenTasks.map(person => (
+                <option key={person} value={person}>
+                  {person}
+                </option>
+              ))}
             </Select>
           </div>
 
           <div className="flex-1">
             <label className="text-sm text-muted-foreground block mb-2">Filtrar por Projeto</label>
-            <Select value={filterProject} onValueChange={setFilterProject}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os projetos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os projetos</SelectItem>
-                {uniqueProjects.map(project => (
-                  <SelectItem key={project} value={project}>
-                    {project}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+            <Select value={filterProject} onChange={(e) => setFilterProject(e.target.value)}>
+              <option value="all">Todos os projetos</option>
+              {uniqueProjects.map(project => (
+                <option key={project} value={project}>
+                  {project}
+                </option>
+              ))}
             </Select>
           </div>
         </div>

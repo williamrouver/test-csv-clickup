@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, ReactNode } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogTitle } from '@/components/ui/dialog';
 import { Maximize2, Minimize2 } from 'lucide-react';
 
 interface ResizableDialogProps {
