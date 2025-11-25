@@ -119,33 +119,32 @@ export function calculateDashboardData(
 
     // Processar status
     const status = mapping.status ? (row[mapping.status] || '').toLowerCase().trim() : '';
+    // Tarefas são consideradas CONCLUÍDAS apenas se tiverem estes status
     const isCompleted = status.includes('complete') ||
                        status.includes('concluído') ||
                        status.includes('done') ||
                        status.includes('fechado') ||
                        status.includes('closed') ||
                        status.includes('accepted');
+    // Tarefas com "to-do", "in progress", etc são consideradas NÃO concluídas
 
     // Processar projeto (pode vir de tags ou campo específico)
     let project = 'Sem projeto';
     if (mapping.project) {
       const projectValue = (row[mapping.project] || '').trim();
-      // Se o projeto contém múltiplos valores separados por vírgula
+      // Se o projeto contém múltiplos valores separados por vírgula, pega o primeiro
       if (projectValue.includes(',')) {
         const projects = projectValue.split(',').map(p => p.trim());
-        // Filtrar "Sprint | " e pegar o primeiro projeto válido
-        const validProject = projects.find(p => !p.match(/^Sprint\s*\|/i));
-        project = validProject || projects[0] || 'Sem projeto';
+        project = projects[0] || 'Sem projeto';
       } else {
         project = projectValue || 'Sem projeto';
       }
     } else if (mapping.tags) {
       const tags = row[mapping.tags] || '';
+      // Se tem múltiplas tags, pega a primeira
       if (tags.includes(',')) {
         const tagList = tags.split(',').map(t => t.trim());
-        // Filtrar "Sprint | " e pegar a primeira tag válida
-        const validTag = tagList.find(t => !t.match(/^Sprint\s*\|/i));
-        project = validTag || tagList[0] || 'Sem projeto';
+        project = tagList[0] || 'Sem projeto';
       } else {
         const firstTag = tags.trim();
         project = firstTag || 'Sem projeto';
