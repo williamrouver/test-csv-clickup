@@ -76,6 +76,40 @@ Dashboard operacional completo para análise de dados exportados do ClickUp, com
 - **Interface Moderna**: Componentes shadcn/ui + Tailwind CSS
 - **Animações Personalizadas**: Fade-in, slide-in e stagger effects
 
+## 📋 Changelog
+
+### [Versão Atual] - 2025-11-26
+
+#### ✨ Novidades
+- **Inclusão de Todos os Projetos**: Agora todos os projetos são incluídos nas visualizações, garantindo análise completa dos dados
+- **Lógica de Status Aprimorada**: Clarificação e melhoria na lógica de identificação de status de tarefas
+- **Filtro de Status na Aba Tarefas**: Nova funcionalidade para filtrar tarefas por status (Todas, Abertas, Concluídas)
+- **Visualização de Tarefas Abertas**: Acompanhamento dedicado para tarefas em andamento
+
+#### 🐛 Correções
+- **Erros de Compilação TypeScript**: Resolução completa de erros de tipo, melhorando a estabilidade do código
+- **Correção no README**: Remoção de texto corrompido no final do arquivo
+
+#### 🔧 Melhorias Técnicas
+- Tipagem mais robusta em todo o projeto
+- Melhor tratamento de dados de projetos
+- Otimização na lógica de filtros
+
+### Versões Anteriores
+
+#### [v1.0.0] - 2025-11
+- Dashboard completo para análise de dados do ClickUp
+- Sistema de importação e mapeamento de CSV
+- Gestão de estagiários com capacidade ajustada
+- Análise de produtividade e capacidade
+- Visualização de projetos e tarefas
+- Exportação para PDF
+- Dark mode com tema otimizado
+- Modais interativos e redimensionáveis
+- Gráficos interativos com Recharts
+
+---
+
 ## 🚀 Stack Tecnológica
 
 | Tecnologia | Versão | Finalidade |
